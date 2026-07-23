@@ -1,0 +1,13 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: new-event-cluster
+  region: us-east-1
+
+managedNodeGroups:
+  - name: workers
+    instanceType: t3.micro
+    desiredCapacity: 3
+    minSize: 1
+    maxSize: 3
