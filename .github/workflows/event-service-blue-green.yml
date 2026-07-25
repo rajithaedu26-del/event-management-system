@@ -149,34 +149,22 @@ jobs:
         run: |
           set -euo pipefail
 
-          kubectl delete pod event-service-smoke-test \
-            --ignore-not-found=true
+          kubectl port-forward             service/event-service-candidate             18080:80             > candidate-port-forward.log 2>&1 &
 
-          kubectl run event-service-smoke-test \
-            --image=curlimages/curl:8.12.1 \
-            --restart=Never \
-            --command -- \
-            sh -c '
-              curl \
-                --fail \
-                --show-error \
-                --silent \
-                --retry 10 \
-                --retry-delay 5 \
-                --retry-connrefused \
-                http://event-service-candidate/events
-            '
+          PORT_FORWARD_PID=$!
 
-          kubectl wait \
-            --for=jsonpath='{.status.phase}'=Succeeded \
-            pod/event-service-smoke-test \
-            --timeout=180s || {
-              kubectl logs event-service-smoke-test || true
-              kubectl describe pod event-service-smoke-test || true
-              exit 1
-            }
+          cleanup_port_forward() {
+            kill "${PORT_FORWARD_PID}" 2>/dev/null || true
+          }
 
-          kubectl logs event-service-smoke-test
+          trap cleanup_port_forward EXIT
+
+          sleep 5
+
+          curl             --fail             --show-error             --silent             --retry 10             --retry-delay 5             --retry-connrefused             http://127.0.0.1:18080/events
+
+          echo
+          echo "Candidate health check passed"
 
       - name: Switch production traffic
         run: |
@@ -209,33 +197,22 @@ jobs:
         run: |
           set -euo pipefail
 
-          kubectl delete pod event-service-live-test \
-            --ignore-not-found=true
+          kubectl port-forward             service/event-service             18081:80             > live-port-forward.log 2>&1 &
 
-          kubectl run event-service-live-test \
-            --image=curlimages/curl:8.12.1 \
-            --restart=Never \
-            --command -- \
-            sh -c '
-              curl \
-                --fail \
-                --show-error \
-                --silent \
-                --retry 10 \
-                --retry-delay 5 \
-                --retry-connrefused \
-                http://event-service/events
-            '
+          PORT_FORWARD_PID=$!
 
-          kubectl wait \
-            --for=jsonpath='{.status.phase}'=Succeeded \
-            pod/event-service-live-test \
-            --timeout=180s || {
-              kubectl logs event-service-live-test || true
-              exit 1
-            }
+          cleanup_port_forward() {
+            kill "${PORT_FORWARD_PID}" 2>/dev/null || true
+          }
 
-          kubectl logs event-service-live-test
+          trap cleanup_port_forward EXIT
+
+          sleep 5
+
+          curl             --fail             --show-error             --silent             --retry 10             --retry-delay 5             --retry-connrefused             http://127.0.0.1:18081/events
+
+          echo
+          echo "Live service verification passed"
 
       - name: Cleanup temporary resources
         if: always()
@@ -243,11 +220,6 @@ jobs:
           kubectl delete service event-service-candidate \
             --ignore-not-found=true
 
-          kubectl delete pod event-service-smoke-test \
-            --ignore-not-found=true
-
-          kubectl delete pod event-service-live-test \
-            --ignore-not-found=true
 
       - name: Deployment summary
         if: success()
