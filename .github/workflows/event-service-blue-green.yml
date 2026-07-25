@@ -110,17 +110,20 @@ jobs:
         run: |
           set -euo pipefail
 
-          kubectl set image \
-            deployment/"${TARGET_DEPLOYMENT}" \
-            "${CONTAINER_NAME}=${IMAGE_URI}"
+          echo "Scaling inactive deployment down"
+          kubectl scale             deployment/"${TARGET_DEPLOYMENT}"             --replicas=0
 
-          kubectl rollout status \
-            deployment/"${TARGET_DEPLOYMENT}" \
-            --timeout=300s
+          kubectl rollout status             deployment/"${TARGET_DEPLOYMENT}"             --timeout=180s
 
-          kubectl get pods \
-            -l "app=event-service,version=${TARGET_COLOR}" \
-            -o wide
+          echo "Updating inactive deployment image"
+          kubectl set image             deployment/"${TARGET_DEPLOYMENT}"             "${CONTAINER_NAME}=${IMAGE_URI}"
+
+          echo "Scaling inactive deployment up"
+          kubectl scale             deployment/"${TARGET_DEPLOYMENT}"             --replicas=1
+
+          kubectl rollout status             deployment/"${TARGET_DEPLOYMENT}"             --timeout=300s
+
+          kubectl get pods             -l "app=event-service,version=${TARGET_COLOR}"             -o wide
 
       - name: Create temporary candidate service
         run: |
