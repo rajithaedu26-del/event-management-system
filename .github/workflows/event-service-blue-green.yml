@@ -76,7 +76,6 @@ jobs:
             --region "${AWS_REGION}"
 
           kubectl cluster-info
-          kubectl get nodes
 
       - name: Determine inactive deployment
         run: |
