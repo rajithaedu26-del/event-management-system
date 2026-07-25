@@ -1,0 +1,266 @@
+name: Event Service Blue-Green Deployment
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: event-service-production
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  AWS_ACCOUNT_ID: "476140239238"
+  EKS_CLUSTER: new-event-cluster
+  ECR_REPOSITORY: event-service
+  SERVICE_NAME: event-service
+  CONTAINER_NAME: event-service
+  CONTAINER_PORT: "5000"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v6.1.0
+        with:
+          role-to-assume: arn:aws:iam::476140239238:role/GitHubActionsEventServiceRole
+          aws-region: ${{ env.AWS_REGION }}
+          allowed-account-ids: ${{ env.AWS_ACCOUNT_ID }}
+
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          IMAGE_URI="${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+
+          echo "Building image: ${IMAGE_URI}"
+
+          docker build \
+            --tag "${IMAGE_URI}" \
+            --tag "${ECR_REGISTRY}/${ECR_REPOSITORY}:latest" \
+            .
+
+          docker push "${IMAGE_URI}"
+          docker push "${ECR_REGISTRY}/${ECR_REPOSITORY}:latest"
+
+          echo "IMAGE_URI=${IMAGE_URI}" >> "$GITHUB_ENV"
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure Kubernetes access
+        run: |
+          aws eks update-kubeconfig \
+            --name "${EKS_CLUSTER}" \
+            --region "${AWS_REGION}"
+
+          kubectl cluster-info
+          kubectl get nodes
+
+      - name: Determine inactive deployment
+        run: |
+          set -euo pipefail
+
+          ACTIVE_COLOR="$(
+            kubectl get service "${SERVICE_NAME}" \
+              -o jsonpath='{.spec.selector.version}'
+          )"
+
+          echo "Currently active colour: ${ACTIVE_COLOR}"
+
+          if [ "${ACTIVE_COLOR}" = "green" ]; then
+            TARGET_COLOR="blue"
+            TARGET_DEPLOYMENT="event-service"
+          elif [ "${ACTIVE_COLOR}" = "blue" ]; then
+            TARGET_COLOR="green"
+            TARGET_DEPLOYMENT="event-service-green"
+          else
+            echo "Unknown Service selector version: ${ACTIVE_COLOR}"
+            exit 1
+          fi
+
+          echo "Deploying inactive colour: ${TARGET_COLOR}"
+          echo "Target deployment: ${TARGET_DEPLOYMENT}"
+
+          echo "ACTIVE_COLOR=${ACTIVE_COLOR}" >> "$GITHUB_ENV"
+          echo "TARGET_COLOR=${TARGET_COLOR}" >> "$GITHUB_ENV"
+          echo "TARGET_DEPLOYMENT=${TARGET_DEPLOYMENT}" >> "$GITHUB_ENV"
+
+      - name: Deploy image to inactive colour
+        run: |
+          set -euo pipefail
+
+          kubectl set image \
+            deployment/"${TARGET_DEPLOYMENT}" \
+            "${CONTAINER_NAME}=${IMAGE_URI}"
+
+          kubectl rollout status \
+            deployment/"${TARGET_DEPLOYMENT}" \
+            --timeout=300s
+
+          kubectl get pods \
+            -l "app=event-service,version=${TARGET_COLOR}" \
+            -o wide
+
+      - name: Create temporary candidate service
+        run: |
+          cat <<MANIFEST | kubectl apply -f -
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: event-service-candidate
+          spec:
+            type: ClusterIP
+            selector:
+              app: event-service
+              version: ${TARGET_COLOR}
+            ports:
+              - name: http
+                port: 80
+                targetPort: ${CONTAINER_PORT}
+          MANIFEST
+
+          kubectl get service event-service-candidate
+          kubectl get endpointslice \
+            -l kubernetes.io/service-name=event-service-candidate \
+            -o wide
+
+      - name: Run candidate health check
+        run: |
+          set -euo pipefail
+
+          kubectl delete pod event-service-smoke-test \
+            --ignore-not-found=true
+
+          kubectl run event-service-smoke-test \
+            --image=curlimages/curl:8.12.1 \
+            --restart=Never \
+            --command -- \
+            sh -c '
+              curl \
+                --fail \
+                --show-error \
+                --silent \
+                --retry 10 \
+                --retry-delay 5 \
+                --retry-connrefused \
+                http://event-service-candidate/events
+            '
+
+          kubectl wait \
+            --for=jsonpath='{.status.phase}'=Succeeded \
+            pod/event-service-smoke-test \
+            --timeout=180s || {
+              kubectl logs event-service-smoke-test || true
+              kubectl describe pod event-service-smoke-test || true
+              exit 1
+            }
+
+          kubectl logs event-service-smoke-test
+
+      - name: Switch production traffic
+        run: |
+          set -euo pipefail
+
+          kubectl patch service "${SERVICE_NAME}" \
+            --type=merge \
+            -p "{\"spec\":{\"selector\":{\"app\":\"event-service\",\"version\":\"${TARGET_COLOR}\"}}}"
+
+          CURRENT_COLOR="$(
+            kubectl get service "${SERVICE_NAME}" \
+              -o jsonpath='{.spec.selector.version}'
+          )"
+
+          if [ "${CURRENT_COLOR}" != "${TARGET_COLOR}" ]; then
+            echo "Traffic switch verification failed"
+            exit 1
+          fi
+
+          echo "Production traffic switched to ${CURRENT_COLOR}"
+
+          kubectl get service "${SERVICE_NAME}" \
+            -o jsonpath='{.spec.selector}{"\n"}'
+
+          kubectl get endpointslice \
+            -l kubernetes.io/service-name="${SERVICE_NAME}" \
+            -o wide
+
+      - name: Verify live service
+        run: |
+          set -euo pipefail
+
+          kubectl delete pod event-service-live-test \
+            --ignore-not-found=true
+
+          kubectl run event-service-live-test \
+            --image=curlimages/curl:8.12.1 \
+            --restart=Never \
+            --command -- \
+            sh -c '
+              curl \
+                --fail \
+                --show-error \
+                --silent \
+                --retry 10 \
+                --retry-delay 5 \
+                --retry-connrefused \
+                http://event-service/events
+            '
+
+          kubectl wait \
+            --for=jsonpath='{.status.phase}'=Succeeded \
+            pod/event-service-live-test \
+            --timeout=180s || {
+              kubectl logs event-service-live-test || true
+              exit 1
+            }
+
+          kubectl logs event-service-live-test
+
+      - name: Cleanup temporary resources
+        if: always()
+        run: |
+          kubectl delete service event-service-candidate \
+            --ignore-not-found=true
+
+          kubectl delete pod event-service-smoke-test \
+            --ignore-not-found=true
+
+          kubectl delete pod event-service-live-test \
+            --ignore-not-found=true
+
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "======================================"
+          echo "Blue-Green deployment successful"
+          echo "Previous colour: ${ACTIVE_COLOR}"
+          echo "Active colour:   ${TARGET_COLOR}"
+          echo "Image:           ${IMAGE_URI}"
+          echo "======================================"
+
+          kubectl get deployments
+          kubectl get pods \
+            -l app=event-service \
+            --show-labels
