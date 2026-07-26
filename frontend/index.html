@@ -28,7 +28,7 @@ http://www.templatemo.com/tm-486-new-event
 <body data-spy="scroll" data-offset="50" data-target=".navbar-collapse">
 <script>
 //  LoadBalancer URL 
-const ANALYTICS_URL = 'http://a36807f04f71a4a90b02ea8336cb6b61-1340273802.us-east-1.elb.amazonaws.com/analytics';
+const ANALYTICS_URL = '/api/events/analytics';
 
 function trackEvent(type, data) {
     fetch(ANALYTICS_URL, {
@@ -131,6 +131,7 @@ console.log('✅ Analytics tracking enabled!');
 				<li><a href="#intro" class="smoothScroll">Intro</a></li>
 				<li><a href="#overview" class="smoothScroll">Overview</a></li>
 				<li><a href="#speakers" class="smoothScroll">Speakers</a></li>
+				<li><a href="#events" class="smoothScroll">Events</a></li>
 				<li><a href="#program" class="smoothScroll">Programs</a></li>
 				<li><a href="#register" class="smoothScroll">Register</a></li>
 				<li><a href="#venue" class="smoothScroll">Venue</a></li>
@@ -314,216 +315,88 @@ console.log('✅ Analytics tracking enabled!');
 </section>
 
 
+
+
 <!-- =========================
-    PROGRAM SECTION   
+     EVENTS SECTION (API BOUND)
+============================== -->
+<section id="events" class="parallax-section">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12 col-sm-12">
+        <div class="section-title">
+          <h2>Available Events</h2>
+          <p id="events-status">Loading events...</p>
+        </div>
+      </div>
+    </div>
+    <div class="row" style="margin-bottom:30px;">
+      <div class="col-md-10 col-md-offset-1">
+        <div class="panel panel-default" style="padding:24px;">
+          <h3>Create New Event</h3>
+          <form id="create-event-form">
+            <div class="row">
+              <div class="col-md-6"><input class="form-control" id="event-title" placeholder="Event title" required></div>
+              <div class="col-md-6"><input class="form-control" id="event-venue" placeholder="Venue" required></div>
+            </div>
+            <div class="row" style="margin-top:12px;">
+              <div class="col-md-4"><input class="form-control" id="event-datetime" type="datetime-local" required></div>
+              <div class="col-md-4"><input class="form-control" id="event-price" type="number" min="0" step="0.01" placeholder="Price" required></div>
+              <div class="col-md-4"><input class="form-control" id="event-capacity" type="number" min="1" placeholder="Capacity" required></div>
+            </div>
+            <button class="btn btn-danger" id="create-event-button" type="submit" style="margin-top:15px;">CREATE EVENT</button>
+            <p id="create-event-status" style="margin-top:12px;"></p>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="row" id="events-list"></div>
+  </div>
+</section>
+
+<!-- =========================
+    PROGRAM SECTION
 ============================== -->
 <section id="program" class="parallax-section">
-	<div class="container">
-		<div class="row">
-
-			<div class="wow fadeInUp col-md-12 col-sm-12" data-wow-delay="0.6s">
-				<div class="section-title">
-					<h2>Our Programs</h2>
-					<p>Quisque ut libero sapien. Integer tellus nisl, efficitur sed dolor at, vehicula finibus massa. Sed tincidunt metus sed eleifend suscipit.</p>
-				</div>
-			</div>
-
-			<div class="wow fadeInUp col-md-10 col-sm-10" data-wow-delay="0.9s">
-				<!-- Nav tabs -->
-				<ul class="nav nav-tabs" role="tablist">
-					<li class="active"><a href="#fday" aria-controls="fday" role="tab" data-toggle="tab">FIRST DAY</a></li>
-					<li><a href="#sday" aria-controls="sday" role="tab" data-toggle="tab">SECOND DAY</a></li>
-					<li><a href="#tday" aria-controls="tday" role="tab" data-toggle="tab">THIRD DAY</a></li>
-				</ul>
-				<!-- tab panes -->
-				<div class="tab-content">
-
-					<div role="tabpanel" class="tab-pane active" id="fday">
-						<!-- program speaker here -->
-						<div class="col-md-2 col-sm-2">
-							<img src="images/program-img1.jpg" class="img-responsive" alt="program">
-						</div>
-						<div class="col-md-10 col-sm-10">
-							<h6>
-								<span><i class="fa fa-clock-o"></i> 09.00 AM</span> 
-								<span><i class="fa fa-map-marker"></i> Room 240</span>
-							</h6>
-							<h3>Introduction to Design</h3>
-							<h4>By Jenny Green</h4>
-							<p>Maecenas accumsan metus turpis, eu faucibus ligula interdum in. Mauris at tincidunt felis, vitae aliquam magna. Sed aliquam fringilla vestibulum.</p>
-						</div>
-
-						<!-- program divider -->
-						<div class="program-divider col-md-12 col-sm-12"></div>
-
-						<!-- program speaker here -->
-						<div class="col-md-2 col-sm-2">
-							<img src="images/program-img2.jpg" class="img-responsive" alt="program">
-						</div>
-						<div class="col-md-10 col-sm-10">
-							<h6>
-								<span><i class="fa fa-clock-o"></i> 10.00 AM</span> 
-								<span><i class="fa fa-map-marker"></i> Room 360</span>
-							</h6>
-							<h3>Front-End Development</h3>
-							<h4>By Johnathan Mark</h4>
-							<p>Mauris at tincidunt felis, vitae aliquam magna. Sed aliquam fringilla vestibulum. Praesent ullamcorper mauris fermentum turpis scelerisque rutrum eget eget turpis.</p>
-						</div>
-
-						<!-- program divider -->
-						<div class="program-divider col-md-12 col-sm-12"></div>
-
-						<!-- program speaker here -->
-						<div class="col-md-2 col-sm-2">
-							<img src="images/program-img3.jpg" class="img-responsive" alt="program">
-						</div>
-						<div class="col-md-10 col-sm-10">
-							<h6>
-								<span><i class="fa fa-clock-o"></i> 11.00 AM</span> 
-								<span><i class="fa fa-map-marker"></i> Room 450</span>
-							</h6>
-							<h3>Social Media Marketing</h3>
-							<h4>By Johnathan Doe</h4>
-							<p>Nam pulvinar, elit vitae rhoncus pretium, massa urna bibendum ex, aliquam efficitur lorem odio vitae erat. Integer rutrum viverra magna, nec ultrices risus rutrum nec.</p>
-						</div>
-					</div>
-
-					<div role="tabpanel" class="tab-pane" id="sday">
-						<!-- program speaker here -->
-						<div class="col-md-2 col-sm-2">
-							<img src="images/program-img4.jpg" class="img-responsive" alt="program">
-						</div>
-						<div class="col-md-10 col-sm-10">
-							<h6>
-								<span><i class="fa fa-clock-o"></i> 11.00 AM</span> 
-								<span><i class="fa fa-map-marker"></i> Room 240</span>
-							</h6>
-							<h3>Backend Development</h3>
-							<h4>By Matt Lee</h4>
-							<p>Integer rutrum viverra magna, nec ultrices risus rutrum nec. Pellentesque interdum vel nisi nec tincidunt. Quisque facilisis scelerisque venenatis. Nam vulputate ultricies luctus.</p>
-						</div>
-
-						<!-- program divider -->
-						<div class="program-divider col-md-12 col-sm-12"></div>
-
-						<!-- program speaker here -->
-						<div class="col-md-2 col-sm-2">
-							<img src="images/program-img5.jpg" class="img-responsive" alt="program">
-						</div>
-						<div class="col-md-10 col-sm-10">
-							<h6>
-								<span><i class="fa fa-clock-o"></i> 01.00 PM</span> 
-								<span><i class="fa fa-map-marker"></i> Room 450</span>
-							</h6>
-							<h3>Web Application Lite</h3>
-							<h4>By David Orlando</h4>
-							<p>Aliquam faucibus lobortis dolor, id pellentesque eros pretium in. Aenean in erat ut quam aliquet commodo. Vivamus aliquam pulvinar ipsum ut sollicitudin. Suspendisse quis sollicitudin mauris.</p>
-						</div>
-
-						<!-- program divider -->
-						<div class="program-divider col-md-12 col-sm-12"></div>
-
-						<!-- program speaker here -->
-						<div class="col-md-2 col-sm-2">
-							<img src="images/program-img6.jpg" class="img-responsive" alt="program">
-						</div>
-						<div class="col-md-10 col-sm-10">
-							<h6>
-								<span><i class="fa fa-clock-o"></i> 03.00 PM</span> 
-								<span><i class="fa fa-map-marker"></i> Room 650</span>
-							</h6>
-							<h3>Professional UX Design</h3>
-							<h4>By James Lee Mark</h4>
-							<p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet. Dolore magna aliquam erat volutpat.</p>
-						</div>
-					</div>
-
-					<div role="tabpanel" class="tab-pane" id="tday">
-						<!-- program speaker here -->
-						<div class="col-md-2 col-sm-2">
-							<img src="images/program-img7.jpg" class="img-responsive" alt="program">
-						</div>
-						<div class="col-md-10 col-sm-10">
-							<h6>
-								<span><i class="fa fa-clock-o"></i> 03.00 PM</span> 
-								<span><i class="fa fa-map-marker"></i> Room 750</span>
-							</h6>
-							<h3>Online Shopping Business</h3>
-							<h4>By Michael Walker</h4>
-							<p>Aliquam faucibus lobortis dolor, id pellentesque eros pretium in. Aenean in erat ut quam aliquet commodo. Vivamus aliquam pulvinar ipsum ut sollicitudin. Suspendisse quis sollicitudin mauris.</p>
-						</div>
-
-						<!-- program divider -->
-						<div class="program-divider col-md-12 col-sm-12"></div>
-
-						<!-- program speaker here -->
-						<div class="col-md-2 col-sm-2">
-							<img src="images/program-img8.jpg" class="img-responsive" alt="program">
-						</div>
-						<div class="col-md-10 col-sm-10">
-							<h6>
-								<span><i class="fa fa-clock-o"></i> 05.00 PM</span> 
-								<span><i class="fa fa-map-marker"></i> Room 850</span>
-							</h6>
-							<h3>Introduction to Mobile App</h3>
-							<h4>By Cherry Stella</h4>
-							<p>Nunc eu nibh vel augue mollis tincidunt id efficitur tortor. Sed pulvinar est sit amet tellus iaculis hendrerit. Mauris justo erat, rhoncus in arcu at, scelerisque tempor erat.</p>
-						</div>
-
-						<!-- program divider -->
-						<div class="program-divider col-md-12 col-sm-12"></div>
-
-						<!-- program speaker here -->
-						<div class="col-md-2 col-sm-2">
-							<img src="images/program-img9.jpg" class="img-responsive" alt="program">
-						</div>
-						<div class="col-md-10 col-sm-10">
-							<h6>
-								<span><i class="fa fa-clock-o"></i> 07.00 PM</span> 
-								<span><i class="fa fa-map-marker"></i> Room 750</span>
-							</h6>
-							<h3>Bootstrap UI Design</h3>
-							<h4>By John David</h4>
-							<p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet. Dolore magna aliquam erat volutpat.</p>
-						</div>
-					</div>
-
-				</div>
-
-		</div>
-	</div>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12 col-sm-12">
+        <div class="section-title">
+          <h2>Our Programs</h2>
+          <p id="programs-status">Loading programs...</p>
+        </div>
+      </div>
+    </div>
+    <div class="row" id="programs-list"></div>
+  </div>
 </section>
 
 
 <!-- =========================
-   REGISTER SECTION   
+   REGISTER SECTION
 ============================== -->
 <section id="register" class="parallax-section">
-	<div class="container">
-		<div class="row">
-
-			<div class="wow fadeInUp col-md-7 col-sm-7" data-wow-delay="0.6s">
-				<h2>Register Here</h2>
-				<h3>Nunc eu nibh vel augue mollis tincidunt id efficitur tortor. Sed pulvinar est sit amet tellus iaculis hendrerit.</h3>
-				<p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet. Dolore magna aliquam erat volutpat. Lorem ipsum dolor sit amet consectetuer diam nonummy.</p>
-			</div>
-
-			<div class="wow fadeInUp col-md-5 col-sm-5" data-wow-delay="1s">
-				<form action="#" method="post">
-					<input name="firstname" type="text" class="form-control" id="firstname" placeholder="First Name">
-					<input name="lastname" type="text" class="form-control" id="lastname" placeholder="Last Name">
-					<input name="phone" type="telephone" class="form-control" id="phone" placeholder="Phone Number">
-					<input name="email" type="email" class="form-control" id="email" placeholder="Email Address">
-					<div class="col-md-offset-6 col-md-6 col-sm-offset-1 col-sm-10">
-						<input name="submit" type="submit" class="form-control" id="submit" value="REGISTER">
-					</div>
-				</form>
-			</div>
-
-			<div class="col-md-1"></div>
-
-		</div>
-	</div>
+  <div class="container">
+    <div class="row">
+      <div class="wow fadeInUp col-md-6 col-sm-6">
+        <h2>Register for an Event</h2>
+        <p>Select an event and submit your details. Registration Service will save the registration and update available seats.</p>
+      </div>
+      <div class="wow fadeInUp col-md-6 col-sm-6">
+        <form id="registration-form">
+          <select class="form-control" id="registration-event" required>
+            <option value="">Select an event</option>
+          </select>
+          <input name="firstname" type="text" class="form-control" id="firstname" placeholder="First Name" required>
+          <input name="lastname" type="text" class="form-control" id="lastname" placeholder="Last Name" required>
+          <input name="phone" type="tel" class="form-control" id="phone" placeholder="Phone Number" required>
+          <input name="email" type="email" class="form-control" id="registration-email" placeholder="Email Address" required>
+          <button type="submit" class="form-control btn btn-danger" id="registration-submit">REGISTER</button>
+          <p id="registration-status" style="margin-top:12px;"></p>
+        </form>
+      </div>
+    </div>
+  </div>
 </section>
 
 
@@ -737,6 +610,182 @@ console.log('✅ Analytics tracking enabled!');
 <script src="js/smoothscroll.js"></script>
 <script src="js/wow.min.js"></script>
 <script src="js/custom.js"></script>
+
+<script>
+const EVENT_SERVICE_URL = '/api/events';
+const PROGRAM_SERVICE_URL = '/api/programs';
+const REGISTRATION_SERVICE_URL = '/api/registration';
+
+let loadedEvents = [];
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;').replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;').replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+function normalizeCollection(payload, preferredKey) {
+  if (Array.isArray(payload)) return payload;
+  if (payload && Array.isArray(payload[preferredKey])) return payload[preferredKey];
+  if (payload && Array.isArray(payload.data)) return payload.data;
+  return [];
+}
+
+async function readJson(response) {
+  const text = await response.text();
+  let data = {};
+  try { data = text ? JSON.parse(text) : {}; } catch (_) { data = { message: text }; }
+  if (!response.ok) throw new Error(data.error || data.message || `Request failed (${response.status})`);
+  return data;
+}
+
+function eventId(event) { return event.id ?? event.event_id ?? event.eventId; }
+function eventTitle(event) { return event.title ?? event.name ?? event.event_name ?? 'Untitled Event'; }
+
+async function loadEvents() {
+  const list = document.getElementById('events-list');
+  const status = document.getElementById('events-status');
+  try {
+    status.textContent = 'Loading events...';
+    const payload = await readJson(await fetch(`${EVENT_SERVICE_URL}/events`));
+    loadedEvents = normalizeCollection(payload, 'events');
+    const select = document.getElementById('registration-event');
+    select.innerHTML = '<option value="">Select an event</option>' + loadedEvents.map(event =>
+      `<option value="${escapeHtml(eventId(event))}">${escapeHtml(eventTitle(event))}</option>`
+    ).join('');
+    if (!loadedEvents.length) {
+      status.textContent = 'No events are available.';
+      list.innerHTML = '';
+      return;
+    }
+    status.textContent = `${loadedEvents.length} event(s) available`;
+    list.innerHTML = loadedEvents.map(event => {
+      const title = eventTitle(event);
+      const venue = event.venue ?? event.location ?? 'Venue not specified';
+      const date = event.datetime ?? event.date_time ?? event.date ?? event.start_time ?? 'Date not specified';
+      const capacity = event.capacity ?? event.total_seats ?? event.seats ?? 'N/A';
+      const available = event.available_seats ?? event.remaining_seats ?? event.seats_available;
+      const price = event.price ?? event.ticket_price;
+      return `<div class="col-md-4 col-sm-6" style="margin-bottom:25px;">
+        <div class="panel panel-default" style="padding:20px;min-height:250px;">
+          <h3>${escapeHtml(title)}</h3>
+          <p><i class="fa fa-map-marker"></i> ${escapeHtml(venue)}</p>
+          <p><i class="fa fa-clock-o"></i> ${escapeHtml(date)}</p>
+          <p><strong>Capacity:</strong> ${escapeHtml(capacity)}</p>
+          ${available !== undefined ? `<p><strong>Available seats:</strong> ${escapeHtml(available)}</p>` : ''}
+          ${price !== undefined ? `<p><strong>Price:</strong> ${escapeHtml(price)}</p>` : ''}
+          <a href="#register" class="btn btn-danger smoothScroll" onclick="selectEventForRegistration('${escapeHtml(eventId(event))}')">REGISTER</a>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (error) {
+    status.textContent = `Unable to load events: ${error.message}`;
+    list.innerHTML = '';
+  }
+}
+
+function selectEventForRegistration(id) {
+  document.getElementById('registration-event').value = id;
+}
+
+async function createEvent(event) {
+  event.preventDefault();
+  const button = document.getElementById('create-event-button');
+  const status = document.getElementById('create-event-status');
+  const payload = {
+    title: document.getElementById('event-title').value.trim(),
+    venue: document.getElementById('event-venue').value.trim(),
+    datetime: document.getElementById('event-datetime').value,
+    price: Number(document.getElementById('event-price').value),
+    capacity: Number(document.getElementById('event-capacity').value)
+  };
+  try {
+    button.disabled = true;
+    status.textContent = 'Creating event...';
+    await readJson(await fetch(`${EVENT_SERVICE_URL}/events`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
+    }));
+    document.getElementById('create-event-form').reset();
+    status.textContent = 'Event created successfully.';
+    await loadEvents();
+  } catch (error) {
+    status.textContent = `Event creation failed: ${error.message}`;
+  } finally { button.disabled = false; }
+}
+
+async function loadPrograms() {
+  const list = document.getElementById('programs-list');
+  const status = document.getElementById('programs-status');
+  try {
+    const payload = await readJson(await fetch(PROGRAM_SERVICE_URL));
+    const programs = normalizeCollection(payload, 'programs');
+    if (!programs.length) { status.textContent = 'No programs are available.'; list.innerHTML = ''; return; }
+    status.textContent = `${programs.length} program(s) available`;
+    list.innerHTML = programs.map(program => {
+      const title = program.title ?? program.name ?? program.program_name ?? 'Untitled Program';
+      const speaker = program.speaker ?? program.presenter ?? program.speaker_name ?? 'Speaker not specified';
+      const time = program.time ?? program.start_time ?? program.datetime ?? program.date_time ?? 'Time not specified';
+      const room = program.room ?? program.venue ?? program.location ?? 'Location not specified';
+      const description = program.description ?? program.details ?? '';
+      return `<div class="col-md-10 col-md-offset-1" style="margin-bottom:20px;">
+        <div class="panel panel-default" style="padding:20px;">
+          <h6><span><i class="fa fa-clock-o"></i> ${escapeHtml(time)}</span>&nbsp;&nbsp;
+          <span><i class="fa fa-map-marker"></i> ${escapeHtml(room)}</span></h6>
+          <h3>${escapeHtml(title)}</h3><h4>By ${escapeHtml(speaker)}</h4>
+          <p>${escapeHtml(description)}</p>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (error) { status.textContent = `Unable to load programs: ${error.message}`; list.innerHTML = ''; }
+}
+
+async function submitRegistration(event) {
+  event.preventDefault();
+  const button = document.getElementById('registration-submit');
+  const status = document.getElementById('registration-status');
+  const firstName = document.getElementById('firstname').value.trim();
+  const lastName = document.getElementById('lastname').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const email = document.getElementById('registration-email').value.trim();
+  const selectedEventId = document.getElementById('registration-event').value;
+  const selected = loadedEvents.find(item => String(eventId(item)) === String(selectedEventId));
+  /*const payload = {
+    event_id: Number.isNaN(Number(selectedEventId)) ? selectedEventId : Number(selectedEventId),
+    eventId: selectedEventId,
+    event_name: selected ? eventTitle(selected) : '',
+    firstname: firstName, first_name: firstName,
+    lastname: lastName, last_name: lastName,
+    name: `${firstName} ${lastName}`.trim(),
+    phone: phone, email: email
+  };*/
+  const payload = {
+  event_id: Number(selectedEventId),
+  name: `${firstName} ${lastName}`.trim(),
+  email: email,
+  ticket_count: 1
+};
+  try {
+    button.disabled = true;
+    status.textContent = 'Submitting registration...';
+    await readJson(await fetch(`${REGISTRATION_SERVICE_URL}/register`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
+    }));
+    document.getElementById('registration-form').reset();
+    status.textContent = 'Registration completed successfully.';
+    await loadEvents();
+  } catch (error) { status.textContent = `Registration failed: ${error.message}`; }
+  finally { button.disabled = false; }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('create-event-form').addEventListener('submit', createEvent);
+  document.getElementById('registration-form').addEventListener('submit', submitRegistration);
+  loadEvents();
+  loadPrograms();
+});
+</script>
+
 
 </body>
 </html>
